@@ -1,7 +1,20 @@
 import numpy as np
 import os
-
+import argparse
 from collections import defaultdict
+import json
+
+def load_data(path):
+    hyps, hyps_ad, refs, sources = [], [], [], []
+    with open(path, 'r', encoding='utf-8') as f:
+        for line in f:
+            jline = json.loads(line)
+            hyps.append(jline["decoded"])
+            hyps_ad.append(jline["adversarial"])
+            refs.append(jline["reference"])
+            sources.append(jline["text"])
+    return hyps, hyps_ad, refs, sources
+
 
 def calculate_accuracy_and_kendall(scores, scores_ad):
     num_hit = np.sum([scores[i] > scores_ad[i] for i in range(len(scores))])
@@ -123,6 +136,8 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
     elif scorer == "SummaCConv":
         from metrics.summaC_score import SummaCConv
+        import nltk
+        nltk.download('punkt')
         scorer = SummaCConv()
         metric = "SummaCConv"
         metric_hash = scorer.hash
@@ -146,5 +161,16 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
 
 if __name__ == "__main__":
-    scorer = "SummaCConv"
-    evaluate(scorer, "antonym_adjective", "cnndm", ["reference 1"], ["hypothesis 1"], ["adversarial hypothesis 1"], ["source 1"])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--metric', type=str, default=None)
+    parser.add_argument('--path', type=str, default=None)
+    args = parser.parse_args()
+    scorer = args.metric
+    path = args.path
+
+    scorer = "NLI1Score"
+    path = "data/adjective_antonym_dataset.jsonl"
+
+    hyps, hyps_ad, refs, sources = load_data(path)
+    error = path.split("/")[1].split(".")[0]
+    evaluate(scorer, error, "cnndm", refs[:3], hyps[:3], hyps_ad[:3], sources[:3])
