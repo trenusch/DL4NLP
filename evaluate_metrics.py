@@ -69,8 +69,8 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         metric_hash = scorer.model_type
 
         acc, kendall = defaultdict(dict), defaultdict(dict)
-        scores = scorer.evaluate_batch(refs, hyps)
-        scores_ad = scorer.evaluate_batch(refs, hyps_ad)
+        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
+        scores_ad = scorer.evaluate_batch(refs, hyps_ad, aggregate=False)
         acc['p'][error], kendall['p'][error] = calculate_accuracy_and_kendall([s["bert_score_precision"] for s in scores], [s["bert_score_precision"] for s in scores_ad])
         acc['r'][error], kendall['r'][error] = calculate_accuracy_and_kendall([s["bert_score_recall"] for s in scores], [s["bert_score_recall"] for s in scores_ad])
         acc['f1'][error], kendall['f1'][error] = calculate_accuracy_and_kendall([s["bert_score_f1"] for s in scores], [s["bert_score_f1"] for s in scores_ad])
@@ -142,6 +142,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         metric = "SummaCConv"
         metric_hash = scorer.hash
 
+        acc, kendall = {}, {}
         scores = scorer.score(sources, hyps)['scores']
         scores_ad = scorer.score(sources, hyps_ad)['scores']
 
@@ -149,12 +150,23 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
         print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
 
-    elif scorer == "MoverScore":
-        from metrics.nli2_score import NLI2Scorer
-        scorer = NLI2Scorer()
-        metric = "MoverScore"
+    elif scorer == "SummaQA":
+        from metrics.summaQA_score import SummaQAMetric
+        scorer = SummaQAMetric()
+        metric = "SummaQA"
         metric_hash = scorer.hash
-        ref_based = True
+
+        acc, kendall = defaultdict(dict), defaultdict(dict)
+        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
+        scores_ad = scorer.evaluate_batch(refs, hyps_ad, aggregate=False)
+
+        acc['avg_prob'][error], kendall['avg_prob'][error] = calculate_accuracy_and_kendall([s["summaqa_avg_prob"] for s in scores], [s["summaqa_avg_prob"] for s in scores_ad])
+        acc['avg_f1'][error], kendall['avg_f1'][error] = calculate_accuracy_and_kendall([s["summaqa_avg_fscore"] for s in scores], [s["summaqa_avg_fscore"] for s in scores_ad])
+
+        variants = acc.keys()
+        for v in variants:
+            v_hash = metric_hash + '_' + v
+            print_and_save(metric, v_hash, dataset, [error], acc[v], kendall[v])
 
     else:
         raise NotImplementedError
@@ -168,8 +180,8 @@ if __name__ == "__main__":
     scorer = args.metric
     path = args.path
 
-    scorer = "NLI1Score"
-    path = "data/adjective_antonym_dataset.jsonl"
+    #scorer = "SummaQA"
+    #path = "data/adjective_antonym_dataset.jsonl"
 
     hyps, hyps_ad, refs, sources = load_data(path)
     error = path.split("/")[1].split(".")[0]

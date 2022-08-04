@@ -4,7 +4,7 @@ import json
 from scipy.stats import pearsonr, kendalltau, spearmanr
 from collections import defaultdict
 import numpy as np
-
+import argparse
 
 def find_source_document(doc_id):
     if "dm" not in doc_id:
@@ -66,37 +66,7 @@ def print_and_save(corr_dict, metric_name):
         with open(output_path, mode) as f:
             f.write(final_string)
 
-def score(metric, data):
-    hyps, refs, docs = [], [], []
-    for h, rs, d in zip(data['hyp'], data['refs'], data['doc']):
-        assert len(rs) == 11
-        hyps += [h] * len(rs)
-        docs += [d] * len(rs)
-        refs += rs
-
-    assert len(refs) == len(hyps) == len(docs)
-
-    # initialize metric
-    if metric == "BartScore":
-        from metrics.bart_score import BARTScorer
-        scorer = BARTScorer(device='cpu')
-        metric_hash = scorer.hash
-        ref_based = True
-
-    elif metric == "BertScore":
-        from metrics.bert_score import BertScoreMetric
-        scorer = BertScoreMetric()
-        metric_hash = scorer.model_type
-        ref_based = True
-
-    else:
-        raise NotImplementedError
-
-    if ref_based:
-        return scorer.evaluate_batch(refs, hyps)
-    else:
-        return scorer.evaluate_batch(sources, hyps)
-
+def evaluate(scores, data, metric, metric_hash):
     scores = [np.max(scores[i * 11: i * 11 + 11]) for i in range(int(len(scores) / 11))]
     data['metric_scores'] = scores
 
@@ -116,11 +86,96 @@ def score(metric, data):
                 corr_dict[anno]['kendall'][c] = kendalltau(human_scores, metric_scores)[0]
         print_and_save(corr_dict, metric_name)
 
+def score(metric, data):
+    hyps, refs, docs = [], [], []
+    for h, rs, d in zip(data['hyp'], data['refs'], data['doc']):
+        assert len(rs) == 11
+        hyps += [h] * len(rs)
+        docs += [d] * len(rs)
+        refs += rs
+
+    assert len(refs) == len(hyps) == len(docs)
+
+    # initialize metric
+    if metric == "BartScore":
+        from metrics.bart_score import BARTScorer
+        scorer = BARTScorer(device='cpu')
+        metric_hash = scorer.hash
+
+    elif metric == "BertScore":
+        from metrics.bert_score import BertScoreMetric
+        scorer = BertScoreMetric()
+        metric_hash = scorer.model_type
+
+        scores = scorer.evaluate_batch(refs, hyps)
+
+        variants = ["bert_score_precision","bert_score_recall","bert_score_f1"]
+        for v in variants:
+            evaluate([s[v] for s in score], data, v, metric_hash)
+
+    elif metric == "NLI1Score":
+        from metrics.nli1_score import NLI1Scorer
+        scorer = NLI1Scorer()
+        metric_hash = scorer.hash
+
+        scores = scorer.evaluate_batch(refs, hyps)
+
+        variants = ["c","n","e"]
+        for score, v in zip(scores, variants):
+            evaluate(score, data, metric + "_" + v, metric_hash)
+
+    elif metric == "NLI2Score":
+        from metrics.nli2_score import NLI2Scorer
+        scorer = NLI2Scorer()
+        metric_hash = scorer.hash
+
+        scores = scorer.evaluate_batch(refs, hyps)
+
+        variants = ["c","n","e"]
+        for score, v in zip(scores, variants):
+            evaluate(score, data, metric + "_" + v, metric_hash)
+
+    elif metric == "SummaCZS":
+        from metrics.summaC_score import SummaCZS
+        import nltk
+        nltk.download('punkt')
+        scorer = SummaCZS(granularity="sentence", model_name="vitc")
+        metric_hash = scorer.hash
+
+        scores = scorer.evaluate_batch(docs, hyps)['scores']
+        evaluate(scores, data, metric, metric_hash)
+
+    elif metric == "SummaCConv":
+        from metrics.summaC_score import SummaCConv
+        import nltk
+        nltk.download('punkt')
+        scorer = SummaCConv()
+        metric_hash = scorer.hash
+        scores = [np.random.random() for i in range(len(hyps))]
+        #scores = scorer.score(docs, hyps)['scores']
+        evaluate(scores, data, metric, metric_hash)
+
+    elif metric == "MoverScore":
+        from metrics.nli2_score import NLI2Scorer
+        scorer = NLI2Scorer()
+        metric_hash = scorer.hash
+        ref_based = True
+
+    else:
+        raise NotImplementedError
+
 
 if __name__ == "__main__":
-    path = "data/model_annotations.aligned.jsonl"
-    data = load_data_summ(path)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--metric', type=str, default=None)
+    parser.add_argument('--path', type=str, default=None)
+    args = parser.parse_args()
+    scorer = args.metric
+    path = args.path
 
-    scorer = "BartScore"
+    scorer = "SummaCConv"
+    path = "data/model_annotations.aligned.jsonl"
+
+    data = load_data_summ(path)
     score(scorer, data)
 
