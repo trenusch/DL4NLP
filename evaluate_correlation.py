@@ -107,7 +107,7 @@ def score(metric, data):
         scorer = BertScoreMetric()
         metric_hash = scorer.model_type
 
-        scores = scorer.evaluate_batch(refs, hyps)
+        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
 
         variants = ["bert_score_precision","bert_score_recall","bert_score_f1"]
         for v in variants:
@@ -151,8 +151,7 @@ def score(metric, data):
         nltk.download('punkt')
         scorer = SummaCConv()
         metric_hash = scorer.hash
-        scores = [np.random.random() for i in range(len(hyps))]
-        #scores = scorer.score(docs, hyps)['scores']
+        scores = scorer.score(docs, hyps)['scores']
         evaluate(scores, data, metric, metric_hash)
 
     elif metric == "MoverScore":
@@ -160,6 +159,19 @@ def score(metric, data):
         scorer = NLI2Scorer()
         metric_hash = scorer.hash
         ref_based = True
+
+    elif scorer == "SummaQA":
+        from metrics.summaQA_score import SummaQAMetric
+        scorer = SummaQAMetric()
+        metric = "SummaQA"
+        metric_hash = scorer.hash
+
+        acc, kendall = defaultdict(dict), defaultdict(dict)
+        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
+
+        variants = ["avg_prob", "avg_f1"]
+        for v in variants:
+            evaluate(scores, data, metric, metric_hash + "_" + v)
 
     else:
         raise NotImplementedError
@@ -173,8 +185,8 @@ if __name__ == "__main__":
     scorer = args.metric
     path = args.path
 
-    scorer = "SummaCConv"
-    path = "data/model_annotations.aligned.jsonl"
+    #scorer = "SummaCConv"
+    #path = "data/model_annotations.aligned.jsonl"
 
     data = load_data_summ(path)
     score(scorer, data)
