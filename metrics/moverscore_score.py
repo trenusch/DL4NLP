@@ -88,8 +88,8 @@ model.to(device)
 
 
 def truncate(tokens):
-    if len(tokens) > tokenizer.model_max_length - 2:
-        tokens = tokens[0:(tokenizer.model_max_length - 2)]
+    if len(tokens) > tokenizer.max_len - 2:
+        tokens = tokens[0:(tokenizer.max_len - 2)]
     return tokens
 
 

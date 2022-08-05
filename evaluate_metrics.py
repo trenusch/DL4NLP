@@ -196,7 +196,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         idf_dict_ref = get_idf_dict(refs)
 
         scores = word_mover_score(refs, hyps, idf_dict_ref, idf_dict_hyp, stop_words=[], n_gram=1, remove_subwords=True)
-        scores_ad = scorer.evaluate_batch(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1, remove_subwords=True)
+        scores_ad = word_mover_score(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1, remove_subwords=True)
 
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
@@ -213,7 +213,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         idf_dict_ref = get_idf_dict(refs)
 
         scores = word_mover_score(refs, hyps, idf_dict_ref, idf_dict_hyp, stop_words=[], n_gram=1, remove_subwords=True)
-        scores_ad = scorer.evaluate_batch(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1, remove_subwords=True)
+        scores_ad = word_mover_score(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1, remove_subwords=True)
 
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
