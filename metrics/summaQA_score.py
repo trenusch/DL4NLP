@@ -47,7 +47,7 @@ class SummaQAMetric(Metric):
         self.tokenize = tokenize
         self.hash = "SummaQA"
 
-    def evaluate_example(self, summary, input_text):
+    def evaluate_example(self, input_text, summary):
         if self.tokenize:
             input_text = nlp(input_text, disable=["tagger", "textcat"])
         masked_questions, answer_spans = self.question_generator.get_questions(input_text)

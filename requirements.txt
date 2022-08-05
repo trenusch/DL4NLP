@@ -5,3 +5,7 @@ xlrd==1.2.0 # For Polytope xlsx file
 requests
 sentencepiece
 bert_score
+blanc
+pyemd
+pytorch_pretrained_bert
+torch

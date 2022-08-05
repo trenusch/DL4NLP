@@ -157,8 +157,8 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         metric_hash = scorer.hash
 
         acc, kendall = defaultdict(dict), defaultdict(dict)
-        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
-        scores_ad = scorer.evaluate_batch(refs, hyps_ad, aggregate=False)
+        scores = scorer.evaluate_batch(sources, hyps, aggregate=False)
+        scores_ad = scorer.evaluate_batch(sources, hyps_ad, aggregate=False)
 
         acc['avg_prob'][error], kendall['avg_prob'][error] = calculate_accuracy_and_kendall([s["summaqa_avg_prob"] for s in scores], [s["summaqa_avg_prob"] for s in scores_ad])
         acc['avg_f1'][error], kendall['avg_f1'][error] = calculate_accuracy_and_kendall([s["summaqa_avg_fscore"] for s in scores], [s["summaqa_avg_fscore"] for s in scores_ad])
@@ -167,6 +167,57 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         for v in variants:
             v_hash = metric_hash + '_' + v
             print_and_save(metric, v_hash, dataset, [error], acc[v], kendall[v])
+
+    elif scorer == "Blanc":
+        from metrics.blanc_score import BlancMetric
+        scorer = BlancMetric()
+        metric = "Blanc"
+        metric_hash = scorer.hash
+
+        acc, kendall = {}, {}
+        scores = scorer.evaluate_batch(sources, hyps, aggregate=False)
+        scores_ad = scorer.evaluate_batch(sources, hyps_ad, aggregate=False)
+
+        scores = [b['blanc'] for b in scores]
+        scores_ad = [b['blanc'] for b in scores_ad]
+
+        acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
+
+        print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
+
+    elif scorer == "MoverScore":
+        from metrics.moverscore_score import get_idf_dict, word_mover_score
+        metric = "MoverScore"
+        metric_hash = "MoverScore"
+        acc, kendall = {}, {}
+
+        idf_dict_hyp = get_idf_dict(hyps)
+        idf_dict_hyp_ad = get_idf_dict(hyps_ad)
+        idf_dict_ref = get_idf_dict(refs)
+
+        scores = word_mover_score(refs, hyps, idf_dict_ref, idf_dict_hyp, stop_words=[], n_gram=1, remove_subwords=True)
+        scores_ad = scorer.evaluate_batch(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1, remove_subwords=True)
+
+        acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
+
+        print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
+
+    elif scorer == "MoverScore2":
+        from metrics.moverscore_v2_score import get_idf_dict, word_mover_score
+        metric = "MoverScore2"
+        metric_hash = "moverscorev2"
+        acc, kendall = {}, {}
+
+        idf_dict_hyp = get_idf_dict(hyps)
+        idf_dict_hyp_ad = get_idf_dict(hyps_ad)
+        idf_dict_ref = get_idf_dict(refs)
+
+        scores = word_mover_score(refs, hyps, idf_dict_ref, idf_dict_hyp, stop_words=[], n_gram=1, remove_subwords=True)
+        scores_ad = scorer.evaluate_batch(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1, remove_subwords=True)
+
+        acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
+
+        print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
 
     else:
         raise NotImplementedError

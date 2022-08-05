@@ -109,9 +109,9 @@ def score(metric, data):
 
         scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
 
-        variants = ["bert_score_precision","bert_score_recall","bert_score_f1"]
+        variants = ["bert_score_precision", "bert_score_recall", "bert_score_f1"]
         for v in variants:
-            evaluate([s[v] for s in score], data, v, metric_hash)
+            evaluate([s[v] for s in scores], data, v, metric_hash)
 
     elif metric == "NLI1Score":
         from metrics.nli1_score import NLI1Scorer
@@ -154,24 +154,47 @@ def score(metric, data):
         scores = scorer.score(docs, hyps)['scores']
         evaluate(scores, data, metric, metric_hash)
 
-    elif metric == "MoverScore":
-        from metrics.nli2_score import NLI2Scorer
-        scorer = NLI2Scorer()
-        metric_hash = scorer.hash
-        ref_based = True
-
-    elif scorer == "SummaQA":
+    elif metric == "SummaQA":
         from metrics.summaQA_score import SummaQAMetric
         scorer = SummaQAMetric()
         metric = "SummaQA"
         metric_hash = scorer.hash
 
-        acc, kendall = defaultdict(dict), defaultdict(dict)
-        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
+        scores = scorer.evaluate_batch(docs, hyps, aggregate=False)
 
         variants = ["avg_prob", "avg_f1"]
         for v in variants:
             evaluate(scores, data, metric, metric_hash + "_" + v)
+
+    elif metric == "Blanc":
+        from metrics.blanc_score import BlancMetric
+        scorer = BlancMetric()
+        metric_hash = scorer.hash
+
+        scores = scorer.evaluate_batch(docs, hyps, aggregate=False)
+        evaluate(scores, data, metric, metric_hash)
+
+    elif metric == "MoverScore":
+        from metrics.moverscore_score import get_idf_dict, word_mover_score
+        metric = "MoverScore"
+        metric_hash = "MoverScore"
+
+        idf_dict_hyp = get_idf_dict(hyps)
+        idf_dict_ref = get_idf_dict(refs)
+
+        scores = word_mover_score(refs, hyps, idf_dict_ref, idf_dict_hyp, stop_words=[], n_gram=1, remove_subwords=True)
+        evaluate(scores, data, metric, metric_hash)
+
+    elif metric == "MoverScore2":
+        from metrics.moverscore_v2_score import get_idf_dict, word_mover_score
+        metric = "MoverScore2"
+        metric_hash = "MoverScore2"
+
+        idf_dict_hyp = get_idf_dict(hyps)
+        idf_dict_ref = get_idf_dict(refs)
+
+        scores = word_mover_score(refs, hyps, idf_dict_ref, idf_dict_hyp, stop_words=[], n_gram=1, remove_subwords=True)
+        evaluate(scores, data, metric, metric_hash)
 
     else:
         raise NotImplementedError
