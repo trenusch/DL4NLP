@@ -7,24 +7,8 @@ import numpy as np
 import argparse
 import datasets
 
-def find_source_document(doc_id, dataset):
-    return dataset['test'][dataset['test'][:]['id'].index(doc_id)]['article']
 
-    """
-    if "dm" not in doc_id:
-        data_dir = "data/cnn/stories/"
-        path = os.path.join(data_dir, doc_id.split('-')[-1] + '.story')
-    else:
-        data_dir = "data/dailymail/stories/"
-        path = os.path.join(data_dir, doc_id.split('-')[-1] + '.story')
-    with open(path, 'r') as f:
-        doc = f.read()
-    doc = doc.split('@highlight')[0].replace('\n', ' ').replace('(CNN)', '')
-    # print(doc)
-    return doc
-    """
-
-def load_data_summ(data_path):
+def load_data_summ(data_path, dataset):
     with open(data_path, 'r', encoding='utf-8') as f:
         json_strings = f.readlines()
 
@@ -33,7 +17,8 @@ def load_data_summ(data_path):
     for l in lines:
         data['system'].append(l['model_id'])
         data['id'].append(l['id'])
-        doc = find_source_document(l['id'])
+        data_id = l['id'].split("-")[2]
+        doc = dataset['test'][dataset['test'][:]['id'].index(data_id)]['article']
         data['doc'].append(doc)
         data['hyp'].append(l['decoded'])
         data['refs'].append(l['references'])
@@ -49,7 +34,7 @@ def load_data_summ(data_path):
 
 def print_and_save(corr_dict, metric_name):
     output_path = os.path.join("data/human_corr_results.csv")
-    #first_raw = "metric,model,dataset,setup,aggregation,correlation,annotator,coherence,consistency,fluency,relevance,average\n"
+    # first_raw = "metric,model,dataset,setup,aggregation,correlation,annotator,coherence,consistency,fluency,relevance,average\n"
     first_raw = "metric, correlation, annotator, coherence, consistency, fluency, relevance, average"
     for anno in ['expert', 'turker']:
         if anno == 'turker':
@@ -62,13 +47,14 @@ def print_and_save(corr_dict, metric_name):
             rel = corr_dict[anno][cor]['relevance']
             avg = np.mean([coh, con, flu, rel])
             s += f"{metric_name},{cor},{anno},{coh},{con},{flu},{rel},{avg}\n"
-            #s += f"{metric_name},{self.args.model},{self.args.dataset},{'ref-free' if self.args.use_article else 'ref-based'}," \
+            # s += f"{metric_name},{self.args.model},{self.args.dataset},{'ref-free' if self.args.use_article else 'ref-based'}," \
             #     f"{self.args.aggregate},{cor},{anno},{coh},{con},{flu},{rel},{avg}\n"
         print(first_raw + s)
         mode = 'w' if not os.path.exists(output_path) else 'a'
         final_string = first_raw + s if not os.path.exists(output_path) else s
         with open(output_path, mode) as f:
             f.write(final_string)
+
 
 def evaluate(scores, data, metric, metric_hash):
     scores = [np.max(scores[i * 11: i * 11 + 11]) for i in range(int(len(scores) / 11))]
@@ -89,6 +75,7 @@ def evaluate(scores, data, metric, metric_hash):
                 corr_dict[anno]['pearson'][c] = pearsonr(human_scores, metric_scores)[0]
                 corr_dict[anno]['kendall'][c] = kendalltau(human_scores, metric_scores)[0]
         print_and_save(corr_dict, metric_name)
+
 
 def score(metric, data):
     hyps, refs, docs = [], [], []
@@ -124,7 +111,7 @@ def score(metric, data):
 
         scores = scorer.evaluate_batch(refs, hyps)
 
-        variants = ["c","n","e"]
+        variants = ["c", "n", "e"]
         for score, v in zip(scores, variants):
             evaluate(score, data, metric + "_" + v, metric_hash)
 
@@ -135,7 +122,7 @@ def score(metric, data):
 
         scores = scorer.evaluate_batch(refs, hyps)
 
-        variants = ["c","n","e"]
+        variants = ["c", "n", "e"]
         for score, v in zip(scores, variants):
             evaluate(score, data, metric + "_" + v, metric_hash)
 
@@ -212,9 +199,8 @@ if __name__ == "__main__":
     scorer = args.metric
     path = args.path
 
-    #scorer = "SummaCConv"
-    #path = "data/model_annotations.aligned.jsonl"
+    # scorer = "SummaCConv"
+    # path = "data/model_annotations.aligned.jsonl"
     dataset = datasets.load_dataset("cnn_dailymail", '3.0.0')
     data = load_data_summ(path, dataset)
     score(scorer, data)
-
