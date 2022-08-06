@@ -5,8 +5,12 @@ from scipy.stats import pearsonr, kendalltau, spearmanr
 from collections import defaultdict
 import numpy as np
 import argparse
+import datasets
 
-def find_source_document(doc_id):
+def find_source_document(doc_id, dataset):
+    return dataset['test'][dataset['test'][:]['id'].index(doc_id)]['article']
+
+    """
     if "dm" not in doc_id:
         data_dir = "data/cnn/stories/"
         path = os.path.join(data_dir, doc_id.split('-')[-1] + '.story')
@@ -18,7 +22,7 @@ def find_source_document(doc_id):
     doc = doc.split('@highlight')[0].replace('\n', ' ').replace('(CNN)', '')
     # print(doc)
     return doc
-
+    """
 
 def load_data_summ(data_path):
     with open(data_path, 'r', encoding='utf-8') as f:
@@ -210,7 +214,7 @@ if __name__ == "__main__":
 
     #scorer = "SummaCConv"
     #path = "data/model_annotations.aligned.jsonl"
-
-    data = load_data_summ(path)
+    dataset = datasets.load_dataset("cnn_dailymail", '3.0.0')
+    data = load_data_summ(path, dataset)
     score(scorer, data)
 
