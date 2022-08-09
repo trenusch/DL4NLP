@@ -25,21 +25,20 @@ def calculate_accuracy_and_kendall(scores, scores_ad):
     return accuracy, kendall
 
 
-def print_and_save(metric, metric_hash, dataset, errors, acc, kendall, save=True, output_dir='data/output.txt'):
-    cols = ['metric', 'setup', 'dataset', 'measurement'] + errors + ['average']
+def print_and_save(metric, metric_hash, dataset, samples, errors, acc, kendall, save=True, output_dir='data/output.txt'):
+    cols = ['metric', 'dataset', "#samples", 'measurement'] + errors + ['average']
     cols = ','.join(cols) + '\n'
 
     accs = [str(acc[k]) for k in errors]
 
-    values = ['{}({})'.format(metric, metric_hash), 'ref-based', dataset, 'accuracy'] + accs + \
-             [str(np.mean(list(acc.values())))]
+    values = ['{}({})'.format(metric, metric_hash), dataset, samples, 'accuracy'] + accs
 
     values = ','.join(values) + '\n'
-    if save:
-        taus = [str(kendall[k]) for k in errors]
-        values += ','.join(['{}({})'.format(metric, metric_hash), 'ref-based', dataset, 'kendall'] + taus + \
-                           [str(np.mean(list(kendall.values())))]) + '\n'
-        print(cols + values)
+    #if save:
+    #    taus = [str(kendall[k]) for k in errors]
+    #    values += ','.join(['{}({})'.format(metric, metric_hash), 'ref-based', dataset, 'kendall'] + taus + \
+    #                       [str(np.mean(list(kendall.values())))]) + '\n'
+    #    print(cols + values)
 
     if save:
         if not os.path.exists(output_dir):
@@ -64,7 +63,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
-        print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
+        print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
 
     elif scorer == "BertScore":
         from metrics.bert_score import BertScoreMetric
@@ -82,7 +81,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         variants = acc.keys()
         for v in variants:
             v_hash = metric_hash + '_' + v
-            print_and_save(metric, v_hash, dataset, [error], acc[v], kendall[v])
+            print_and_save(metric, v_hash, dataset, len(refs), [error], acc[v], kendall[v])
 
     elif scorer == "NLI1Score":
         from metrics.nli1_score import NLI1Scorer
@@ -101,7 +100,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         variants = acc.keys()
         for v in variants:
             v_hash = metric_hash + '_' + v
-            print_and_save(metric, v_hash, dataset, [error], acc[v], kendall[v])
+            print_and_save(metric, v_hash, dataset, len(refs), [error], acc[v], kendall[v])
 
     elif scorer == "NLI2Score":
         from metrics.nli2_score import NLI2Scorer
@@ -120,7 +119,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         variants = acc.keys()
         for v in variants:
             v_hash = metric_hash + '_' + v
-            print_and_save(metric, v_hash, dataset, [error], acc[v], kendall[v])
+            print_and_save(metric, v_hash, dataset, len(refs), [error], acc[v], kendall[v])
 
     elif scorer == "SummaCZS":
         from metrics.summaC_score import SummaCZS
@@ -136,7 +135,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
-        print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
+        print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
 
     elif scorer == "SummaCConv":
         from metrics.summaC_score import SummaCConv
@@ -152,7 +151,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
-        print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
+        print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
 
     elif scorer == "SummaQA":
         from metrics.summaQA_score import SummaQAMetric
@@ -170,7 +169,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         variants = acc.keys()
         for v in variants:
             v_hash = metric_hash + '_' + v
-            print_and_save(metric, v_hash, dataset, [error], acc[v], kendall[v])
+            print_and_save(metric, v_hash, dataset, len(refs), [error], acc[v], kendall[v])
 
     elif scorer == "Blanc":
         from metrics.blanc_score import BlancMetric
@@ -187,7 +186,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
-        print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
+        print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
 
     elif scorer == "MoverScore":
         from metrics.moverscore_score import get_idf_dict, word_mover_score
@@ -204,7 +203,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
-        print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
+        print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
 
     elif scorer == "MoverScore2":
         from metrics.moverscore_v2_score import get_idf_dict, word_mover_score
@@ -221,7 +220,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
-        print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
+        print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
 
     else:
         raise NotImplementedError
