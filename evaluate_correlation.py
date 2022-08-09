@@ -90,8 +90,12 @@ def score(metric, data):
     # initialize metric
     if metric == "BartScore":
         from metrics.bart_score import BARTScorer
-        scorer = BARTScorer(device='cpu')
+        scorer = BARTScorer()
         metric_hash = scorer.hash
+
+        scores = scorer.evaluate_batch(refs, hyps)
+
+        evaluate(scores, data, metric, metric_hash)
 
     elif metric == "BertScore":
         from metrics.bert_score import BertScoreMetric

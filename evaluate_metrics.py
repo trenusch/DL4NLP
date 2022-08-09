@@ -9,9 +9,9 @@ def load_data(path):
     with open(path, 'r', encoding='utf-8') as f:
         for line in f:
             jline = json.loads(line)
-            hyps.append(jline["decoded"])
-            hyps_ad.append(jline["adversarial"])
-            refs.append(jline["reference"])
+            hyps.append(jline["hyp"])
+            hyps_ad.append(jline["claim"])
+            refs.append(jline["origin_claim"])
             sources.append(jline["text"])
     return hyps, hyps_ad, refs, sources
 
@@ -61,6 +61,9 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         scores = scorer.evaluate_batch(refs, hyps)
         scores_ad = scorer.evaluate_batch(refs, hyps_ad)
 
+        acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
+
+        print_and_save(metric, metric_hash, dataset, [error], acc, kendall)
 
     elif scorer == "BertScore":
         from metrics.bert_score import BertScoreMetric
@@ -226,14 +229,13 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--metric', type=str, default=None)
-    parser.add_argument('--path', type=str, default=None)
+    parser.add_argument('--path', type=str, default="data/adversarial_data/")
     args = parser.parse_args()
     scorer = args.metric
     path = args.path
 
-    #scorer = "SummaQA"
-    #path = "data/adjective_antonym_dataset.jsonl"
-
-    hyps, hyps_ad, refs, sources = load_data(path)
-    error = path.split("/")[1].split(".")[0]
-    evaluate(scorer, error, "cnndm", refs[:3], hyps[:3], hyps_ad[:3], sources[:3])
+    for file in os.listdir(path):
+        hyps, hyps_ad, refs, sources = load_data(path + file)
+        error = file.split("_")[1][:-6]
+        dataset = file.split("_")[0]
+        evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources)
