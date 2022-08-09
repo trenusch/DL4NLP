@@ -3,6 +3,7 @@ import os
 import argparse
 from collections import defaultdict
 import json
+import tqdm
 
 def load_data(path):
     hyps, hyps_ad, refs, sources = [], [], [], []
@@ -234,7 +235,7 @@ if __name__ == "__main__":
     scorer = args.metric
     path = args.path
 
-    for file in os.listdir(path):
+    for file in tqdm.tqdm(os.listdir(path)):
         hyps, hyps_ad, refs, sources = load_data(path + file)
         error = file.split("_")[1][:-6]
         dataset = file.split("_")[0]
