@@ -26,12 +26,12 @@ def calculate_accuracy_and_kendall(scores, scores_ad):
 
 
 def print_and_save(metric, metric_hash, dataset, samples, errors, acc, kendall, save=True, output_dir='data/output.txt'):
-    cols = ['metric', 'dataset', "#samples", 'measurement'] + errors + ['average']
+    cols = ['metric', 'dataset', 'error', "#samples", 'measurement', 'score']
     cols = ','.join(cols) + '\n'
 
     accs = [str(acc[k]) for k in errors]
 
-    values = ['{}({})'.format(metric, metric_hash), dataset, samples, 'accuracy'] + accs
+    values = ['{}({})'.format(metric, metric_hash), dataset, errors[0], str(samples), 'accuracy'] + accs
 
     values = ','.join(values) + '\n'
     #if save:
