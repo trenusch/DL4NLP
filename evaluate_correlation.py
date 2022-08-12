@@ -163,6 +163,8 @@ def score(metric, data):
 
     elif metric == "Blanc":
         from metrics.blanc_score import BlancMetric
+        import nltk
+        nltk.download('punkt')
         scorer = BlancMetric()
         metric_hash = scorer.hash
 

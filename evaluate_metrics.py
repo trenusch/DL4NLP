@@ -173,6 +173,8 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
     elif scorer == "Blanc":
         from metrics.blanc_score import BlancMetric
+        import nltk
+        nltk.download('punkt')
         scorer = BlancMetric()
         metric = "Blanc"
         metric_hash = scorer.hash
