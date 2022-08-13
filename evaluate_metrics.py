@@ -246,6 +246,9 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
         scores_ad = scorer.evaluate_batch(refs, hyps_ad, aggregate=False)
 
+        scores = [b['chrf'] for b in scores]
+        scores_ad = [b['chrf'] for b in scores_ad]
+
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
         print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
