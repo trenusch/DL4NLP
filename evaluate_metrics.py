@@ -5,6 +5,7 @@ from collections import defaultdict
 import json
 import tqdm
 
+
 def load_data(path):
     hyps, hyps_ad, refs, sources = [], [], [], []
     with open(path, 'r', encoding='utf-8') as f:
@@ -25,7 +26,8 @@ def calculate_accuracy_and_kendall(scores, scores_ad):
     return accuracy, kendall
 
 
-def print_and_save(metric, metric_hash, dataset, samples, errors, acc, kendall, save=True, output_dir='data/output.txt'):
+def print_and_save(metric, metric_hash, dataset, samples, errors, acc, kendall, save=True,
+                   output_dir='data/output.txt'):
     cols = ['metric', 'dataset', 'error', "#samples", 'measurement', 'score']
     cols = ','.join(cols) + '\n'
 
@@ -34,7 +36,7 @@ def print_and_save(metric, metric_hash, dataset, samples, errors, acc, kendall, 
     values = ['{}({})'.format(metric, metric_hash), dataset, errors[0], str(samples), 'accuracy'] + accs
 
     values = ','.join(values) + '\n'
-    #if save:
+    # if save:
     #    taus = [str(kendall[k]) for k in errors]
     #    values += ','.join(['{}({})'.format(metric, metric_hash), 'ref-based', dataset, 'kendall'] + taus + \
     #                       [str(np.mean(list(kendall.values())))]) + '\n'
@@ -74,9 +76,13 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         acc, kendall = defaultdict(dict), defaultdict(dict)
         scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
         scores_ad = scorer.evaluate_batch(refs, hyps_ad, aggregate=False)
-        acc['p'][error], kendall['p'][error] = calculate_accuracy_and_kendall([s["bert_score_precision"] for s in scores], [s["bert_score_precision"] for s in scores_ad])
-        acc['r'][error], kendall['r'][error] = calculate_accuracy_and_kendall([s["bert_score_recall"] for s in scores], [s["bert_score_recall"] for s in scores_ad])
-        acc['f1'][error], kendall['f1'][error] = calculate_accuracy_and_kendall([s["bert_score_f1"] for s in scores], [s["bert_score_f1"] for s in scores_ad])
+        acc['p'][error], kendall['p'][error] = calculate_accuracy_and_kendall(
+            [s["bert_score_precision"] for s in scores], [s["bert_score_precision"] for s in scores_ad])
+        acc['r'][error], kendall['r'][error] = calculate_accuracy_and_kendall([s["bert_score_recall"] for s in scores],
+                                                                              [s["bert_score_recall"] for s in
+                                                                               scores_ad])
+        acc['f1'][error], kendall['f1'][error] = calculate_accuracy_and_kendall([s["bert_score_f1"] for s in scores],
+                                                                                [s["bert_score_f1"] for s in scores_ad])
 
         variants = acc.keys()
         for v in variants:
@@ -93,7 +99,8 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         scores = scorer.evaluate_batch(refs, hyps)
         scores_ad = scorer.evaluate_batch(refs, hyps_ad)
 
-        acc['c'][error], kendall['c'][error] = calculate_accuracy_and_kendall(scores[0], scores_ad[0])
+        acc['c'][error], kendall['c'][error] = calculate_accuracy_and_kendall([1 - s for s in scores[0]],
+                                                                              [1 - s for s in scores_ad[0]])
         acc['n'][error], kendall['n'][error] = calculate_accuracy_and_kendall(scores[1], scores_ad[1])
         acc['e'][error], kendall['e'][error] = calculate_accuracy_and_kendall(scores[2], scores_ad[2])
 
@@ -112,7 +119,8 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         scores = scorer.evaluate_batch(refs, hyps)
         scores_ad = scorer.evaluate_batch(refs, hyps_ad)
 
-        acc['c'][error], kendall['c'][error] = calculate_accuracy_and_kendall(scores[0], scores_ad[0])
+        acc['c'][error], kendall['c'][error] = calculate_accuracy_and_kendall([1 - s for s in scores[0]],
+                                                                              [1 - s for s in scores_ad[0]])
         acc['n'][error], kendall['n'][error] = calculate_accuracy_and_kendall(scores[1], scores_ad[1])
         acc['e'][error], kendall['e'][error] = calculate_accuracy_and_kendall(scores[2], scores_ad[2])
 
@@ -163,8 +171,10 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         scores = scorer.evaluate_batch(sources, hyps, aggregate=False)
         scores_ad = scorer.evaluate_batch(sources, hyps_ad, aggregate=False)
 
-        acc['avg_prob'][error], kendall['avg_prob'][error] = calculate_accuracy_and_kendall([s["summaqa_avg_prob"] for s in scores], [s["summaqa_avg_prob"] for s in scores_ad])
-        acc['avg_f1'][error], kendall['avg_f1'][error] = calculate_accuracy_and_kendall([s["summaqa_avg_fscore"] for s in scores], [s["summaqa_avg_fscore"] for s in scores_ad])
+        acc['avg_prob'][error], kendall['avg_prob'][error] = calculate_accuracy_and_kendall(
+            [s["summaqa_avg_prob"] for s in scores], [s["summaqa_avg_prob"] for s in scores_ad])
+        acc['avg_f1'][error], kendall['avg_f1'][error] = calculate_accuracy_and_kendall(
+            [s["summaqa_avg_fscore"] for s in scores], [s["summaqa_avg_fscore"] for s in scores_ad])
 
         variants = acc.keys()
         for v in variants:
@@ -201,7 +211,8 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         idf_dict_ref = get_idf_dict(refs)
 
         scores = word_mover_score(refs, hyps, idf_dict_ref, idf_dict_hyp, stop_words=[], n_gram=1, remove_subwords=True)
-        scores_ad = word_mover_score(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1, remove_subwords=True)
+        scores_ad = word_mover_score(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1,
+                                     remove_subwords=True)
 
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
@@ -218,7 +229,8 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         idf_dict_ref = get_idf_dict(refs)
 
         scores = word_mover_score(refs, hyps, idf_dict_ref, idf_dict_hyp, stop_words=[], n_gram=1, remove_subwords=True)
-        scores_ad = word_mover_score(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1, remove_subwords=True)
+        scores_ad = word_mover_score(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1,
+                                     remove_subwords=True)
 
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 

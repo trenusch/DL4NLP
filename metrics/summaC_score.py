@@ -249,7 +249,7 @@ class SummaCImager:
                 self.cache = {tuple(k.split("[///]")): np.array(v) for k, v in cache_cp.items()}
 
 class SummaCConv(torch.nn.Module):
-    def __init__(self, models=["mnli", "anli", "vitc"], bins='even50', granularity="sentence", nli_labels="e", device="cuda", start_file=None, imager_load_cache=True, agg="mean", norm_histo=False, **kwargs):
+    def __init__(self, models=["mnli", "anli", "vitc"], bins='even50', granularity="sentence", nli_labels="e", device="cuda", start_file="summac_conv_vitc_sent_perc_e.bin", imager_load_cache=True, agg="mean", norm_histo=False, **kwargs):
         # `bins` should be `even%d` or `percentiles`
         assert nli_labels in ["e", "c", "n", "ec", "en", "cn", "ecn"], "Unrecognized nli_labels argument %s" % (nli_labels)
 
@@ -433,6 +433,7 @@ class SummaCZS:
 
 if __name__ == "__main__":
     model = SummaCZS(granularity="sentence", model_name="vitc", imager_load_cache=True)
+    model2 = SummaCConv()
 
     # Example from Paul from the Keep it Simple project
     document = """Jeff joined Microsoft in 1992 to lead corporate developer evangelism for Windows NT. He then served as a Group Program manager in Microsoft’s Internet Business Unit. In 1998, he led the creation of SharePoint Portal Server, which became one of Microsoft’s fastest-growing businesses, exceeding $2 billion in revenues. Jeff next served as Corporate Vice President for Program Management across Office 365 Services and Servers, which is the foundation of Microsoft’s enterprise cloud leadership. He then led Corporate Strategy supporting Satya Nadella and Amy Hood on Microsoft’s mobile-first/cloud-first transformation and acquisitions. Prior to joining Microsoft, Jeff was vice president for software development for an investment firm in New York. He leads Office shared experiences and core applications, as well as OneDrive and SharePoint consumer and business services in Office 365. Jeff holds a Master of Business Administration degree from Harvard Business School and a Bachelor of Science degree in information systems and finance from New York University."""

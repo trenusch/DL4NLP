@@ -117,6 +117,8 @@ def score(metric, data):
 
         variants = ["c", "n", "e"]
         for score, v in zip(scores, variants):
+            if v == "c":
+                score = [1 - s for s in score]
             evaluate(score, data, metric + "_" + v, metric_hash)
 
     elif metric == "NLI2Score":
@@ -128,6 +130,8 @@ def score(metric, data):
 
         variants = ["c", "n", "e"]
         for score, v in zip(scores, variants):
+            if v == "c":
+                score = [1 - s for s in score]
             evaluate(score, data, metric + "_" + v, metric_hash)
 
     elif metric == "SummaCZS":
