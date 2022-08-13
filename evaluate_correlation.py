@@ -35,7 +35,7 @@ def load_data_summ(data_path, dataset):
 def print_and_save(corr_dict, metric_name):
     output_path = os.path.join("data/human_corr_results.csv")
     # first_raw = "metric,model,dataset,setup,aggregation,correlation,annotator,coherence,consistency,fluency,relevance,average\n"
-    first_raw = "metric, correlation, annotator, coherence, consistency, fluency, relevance, average"
+    first_raw = "metric, correlation, annotator, coherence, consistency, fluency, relevance, average\n"
     for anno in ['expert', 'turker']:
         if anno == 'turker':
             continue
@@ -200,13 +200,11 @@ def score(metric, data):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--metric', type=str, default=None)
-    parser.add_argument('--path', type=str, default=None)
+    parser.add_argument('--path', type=str, default="data/model_annotations.aligned.scored.jsonl")
     args = parser.parse_args()
     scorer = args.metric
     path = args.path
 
-    # scorer = "SummaCConv"
-    # path = "data/model_annotations.aligned.jsonl"
     dataset = datasets.load_dataset("cnn_dailymail", '3.0.0')
     data = load_data_summ(path, dataset)
     score(scorer, data)
