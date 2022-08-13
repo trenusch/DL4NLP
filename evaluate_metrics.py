@@ -236,6 +236,37 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
 
         print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
 
+    elif scorer == "CHRF":
+        from metrics.chrf_score import ChrfppMetric
+        scorer = ChrfppMetric()
+        metric = "CHRF"
+        metric_hash = "CHRF"
+        acc, kendall = {}, {}
+
+        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
+        scores_ad = scorer.evaluate_batch(refs, hyps_ad, aggregate=False)
+
+        acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
+
+        print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
+
+    elif scorer == "Meteor":
+        from metrics.meteor_score import MeteorMetric
+        scorer = MeteorMetric()
+        metric = "Meteor"
+        metric_hash = "Meteor"
+        acc, kendall = {}, {}
+
+        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
+        scores_ad = scorer.evaluate_batch(refs, hyps_ad, aggregate=False)
+
+        scores = [b['meteor'] for b in scores]
+        scores_ad = [b['meteor'] for b in scores_ad]
+
+        acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
+
+        print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
+
     else:
         raise NotImplementedError
 

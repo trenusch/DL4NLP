@@ -197,6 +197,26 @@ def score(metric, data):
         scores = word_mover_score(refs, hyps, idf_dict_ref, idf_dict_hyp, stop_words=[], n_gram=1, remove_subwords=True)
         evaluate(scores, data, metric, metric_hash)
 
+    elif metric == "CHRF":
+        from metrics.chrf_score import ChrfppMetric
+        scorer = ChrfppMetric()
+        metric = "CHRF"
+        metric_hash = "CHRF"
+
+        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
+        evaluate(scores, data, metric, metric_hash)
+
+    elif metric == "Meteor":
+        from metrics.meteor_score import MeteorMetric
+        scorer = MeteorMetric()
+        metric = "Meteor"
+        metric_hash = "Meteor"
+
+        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
+        scores = [b['meteor'] for b in scores]
+        evaluate(scores, data, metric, metric_hash)
+
+
     else:
         raise NotImplementedError
 
