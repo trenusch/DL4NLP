@@ -149,7 +149,7 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         from metrics.summaC_score import SummaCConv
         import nltk
         nltk.download('punkt')
-        scorer = SummaCConv()
+        scorer = SummaCConv(models=['vitc'], bins="percentile")
         metric = "SummaCConv"
         metric_hash = scorer.hash
 

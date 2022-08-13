@@ -148,7 +148,7 @@ def score(metric, data):
         from metrics.summaC_score import SummaCConv
         import nltk
         nltk.download('punkt')
-        scorer = SummaCConv()
+        scorer = SummaCConv(models=['vitc'], bins="percentile")
         metric_hash = scorer.hash
         scores = scorer.score(docs, hyps)['scores']
         evaluate(scores, data, metric, metric_hash)
@@ -204,6 +204,7 @@ def score(metric, data):
         metric_hash = "CHRF"
 
         scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
+        scores = [b['chrf'] for b in scores]
         evaluate(scores, data, metric, metric_hash)
 
     elif metric == "Meteor":
