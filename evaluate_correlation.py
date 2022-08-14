@@ -32,9 +32,7 @@ def load_data_summ(data_path, dataset):
     return data
 
 
-def print_and_save(corr_dict, metric_name):
-    output_path = os.path.join("data/human_corr_results.csv")
-    # first_raw = "metric,model,dataset,setup,aggregation,correlation,annotator,coherence,consistency,fluency,relevance,average\n"
+def print_and_save(corr_dict, metric_name, output_path="data/human_corr_results.csv"):
     first_raw = "metric, correlation, annotator, coherence, consistency, fluency, relevance, average\n"
     for anno in ['expert', 'turker']:
         if anno == 'turker':
@@ -47,8 +45,6 @@ def print_and_save(corr_dict, metric_name):
             rel = corr_dict[anno][cor]['relevance']
             avg = np.mean([coh, con, flu, rel])
             s += f"{metric_name},{cor},{anno},{coh},{con},{flu},{rel},{avg}\n"
-            # s += f"{metric_name},{self.args.model},{self.args.dataset},{'ref-free' if self.args.use_article else 'ref-based'}," \
-            #     f"{self.args.aggregate},{cor},{anno},{coh},{con},{flu},{rel},{avg}\n"
         print(first_raw + s)
         mode = 'w' if not os.path.exists(output_path) else 'a'
         final_string = first_raw + s if not os.path.exists(output_path) else s
@@ -216,24 +212,6 @@ def score(metric, data):
         scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
         scores = [b['meteor'] for b in scores]
         evaluate(scores, data, metric, metric_hash)
-
-    elif metric == "NLI_CHRF":
-        from metrics.nli1_score import NLI1Scorer
-        from metrics.chrf_score import ChrfppMetric
-
-        nli_scorer = NLI1Scorer()
-        chrf_scorer = ChrfppMetric()
-
-        nli_scores = nli_scorer.evaluate_batch(refs, hyps, aggregate=False)
-        chrf_scores = chrf_scorer.evaluate_batch(refs, hyps, aggregate=False)
-        chrf_scores = [s['chrf'] for s in chrf_scores]
-
-        for i in range(11):
-            weight = i * 0.1
-            metric_hash = "{}_nli_{}_chrf".format(weight, 1 - weight)
-            scores = [0.5 * (weight * nli + (1 - weight) * chrf) for nli, chrf in zip(nli_scores, chrf_scores)]
-            evaluate(scores, data, metric, metric_hash)
-
 
     else:
         raise NotImplementedError

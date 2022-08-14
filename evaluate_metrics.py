@@ -40,7 +40,7 @@ def print_and_save(metric, metric_hash, dataset, samples, errors, acc, kendall, 
     #    taus = [str(kendall[k]) for k in errors]
     #    values += ','.join(['{}({})'.format(metric, metric_hash), 'ref-based', dataset, 'kendall'] + taus + \
     #                       [str(np.mean(list(kendall.values())))]) + '\n'
-    #    print(cols + values)
+    print(cols + values)
 
     if save:
         if not os.path.exists(output_dir):
@@ -269,33 +269,6 @@ def evaluate(scorer, error, dataset, refs, hyps, hyps_ad, sources):
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
         print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
-
-    elif scorer == "NLI_CHRF":
-        from metrics.nli1_score import NLI1Scorer
-        from metrics.chrf_score import ChrfppMetric
-
-        metric = "NLI_CHRF"
-
-        nli_scorer = NLI1Scorer()
-        chrf_scorer = ChrfppMetric()
-
-        nli_scores = nli_scorer.evaluate_batch(refs, hyps, aggregate=False)
-        nli_scores_ad = nli_scorer.evaluate_batch(refs, hyps_ad, aggregate=False)
-        chrf_scores = chrf_scorer.evaluate_batch(refs, hyps, aggregate=False)
-        chrf_scores_ad = chrf_scorer.evaluate_batch(refs, hyps_ad, aggregate=False)
-        chrf_scores = [s['chrf'] for s in chrf_scores]
-        chrf_scores_ad = [s['chrf'] for s in chrf_scores_ad]
-
-        for i in range(11):
-            acc, kendall = {}, {}
-            weight = i * 0.1
-            metric_hash = "{}_nli_{}_chrf".format(weight, 1 - weight)
-            scores = [0.5 * (weight * nli + (1 - weight) * chrf) for nli, chrf in zip(nli_scores[2], chrf_scores)]
-            scores_ad = [0.5 * (weight * nli + (1 - weight) * chrf) for nli, chrf in zip(nli_scores_ad[2], chrf_scores_ad)]
-            acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
-
-            print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall)
-
 
     else:
         raise NotImplementedError
