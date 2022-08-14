@@ -217,6 +217,23 @@ def score(metric, data):
         scores = [b['meteor'] for b in scores]
         evaluate(scores, data, metric, metric_hash)
 
+    elif metric == "NLI_CHRF":
+        from metrics.nli1_score import NLI1Scorer
+        from metrics.chrf_score import ChrfppMetric
+
+        nli_scorer = NLI1Scorer()
+        chrf_scorer = ChrfppMetric()
+
+        nli_scores = nli_scorer.evaluate_batch(refs, hyps, aggregate=False)
+        chrf_scores = chrf_scorer.evaluate_batch(refs, hyps, aggregate=False)
+        chrf_scores = [s['chrf'] for s in chrf_scores]
+
+        for i in range(11):
+            weight = i * 0.1
+            metric_hash = "{}_nli_{}_chrf".format(weight, 1 - weight)
+            scores = [0.5 * (weight * nli + (1 - weight) * chrf) for nli, chrf in zip(nli_scores, chrf_scores)]
+            evaluate(scores, data, metric, metric_hash)
+
 
     else:
         raise NotImplementedError
