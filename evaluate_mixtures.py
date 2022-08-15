@@ -44,7 +44,9 @@ def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, 
         variants = ["bert_score_precision", "bert_score_recall", "bert_score_f1"]
 
         for v in variants:
-            evaluate_mix(nli_scores, nli_scores_ad, scores, scores_ad, metric + v, dataset, error)
+            scores_v = [s[v] for s in scores]
+            scores_v_ad = [s[v] for s in scores_ad]
+            evaluate_mix(nli_scores, nli_scores_ad, scores_v, scores_v_ad, metric + v, dataset, error)
 
     elif scorer == "NLI_MoverScore2":
         metric = scorer
@@ -120,12 +122,12 @@ def score_corr(scorer, data, nli_scores):
         from metrics.bert_score import BertScoreMetric
         scorer = BertScoreMetric()
 
-        scores = scorer.evaluate_batch(refs, hyps)
+        scores = scorer.evaluate_batch(refs, hyps, aggregate=False)
 
         variants = ["bert_score_precision", "bert_score_recall", "bert_score_f1"]
 
         for v in variants:
-            evaluate_corr_mix(nli_scores, scores, metric + v, data)
+            evaluate_corr_mix(nli_scores, [s[v] for s in scores], metric + v, data)
 
     elif scorer == "NLI_MoverScore2":
         metric = scorer
