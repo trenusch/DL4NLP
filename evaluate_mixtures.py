@@ -5,7 +5,7 @@ import tqdm
 import os
 import datasets
 
-def evaluate_mix(nli_scores, nli_scores_ad, metric_scores, metric_scores_ad, metric, dataset):
+def evaluate_mix(nli_scores, nli_scores_ad, metric_scores, metric_scores_ad, metric, dataset, error):
     for i in range(11):
         acc, kendall = {}, {}
         weight = i * 0.1
@@ -15,23 +15,17 @@ def evaluate_mix(nli_scores, nli_scores_ad, metric_scores, metric_scores_ad, met
                      zip(nli_scores_ad[2], metric_scores_ad)]
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
-        print_and_save(metric, metric_hash, dataset, len(refs), [error], acc, kendall,
+        print_and_save(metric, metric_hash, dataset, len(scores), [error], acc, kendall,
                        output_dir="data/mix_output.txt")
 
-def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources):
-    from metrics.nli1_score import NLI1Scorer
-    nli_scorer = NLI1Scorer()
-
-    nli_scores = nli_scorer.evaluate_batch(refs, hyps)
-    nli_scores_ad = nli_scorer.evaluate_batch(refs, hyps_ad)
-
+def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, nli_scores_ad):
     if scorer == "NLI_BartScore":
         metric = scorer
         from metrics.bart_score import BARTScorer
         scorer = BARTScorer()
 
         scores = scorer.evaluate_batch(refs, hyps)
-        scores_ad = scorer.evaluate_batch(refs, hyps)
+        scores_ad = scorer.evaluate_batch(refs, hyps_ad)
 
         evaluate_mix(nli_scores, nli_scores_ad, scores, scores_ad, metric, dataset)
 
@@ -98,6 +92,13 @@ def evaluate_corr_mix(nli_scores, metric_scores, metric, data):
         evaluate(scores, data, metric, metric_hash, output_path="data/mix_human_correlation.csv")
 
 def score_corr(scorer, data):
+    hyps, refs, docs = [], [], []
+    for h, rs, d in zip(data['hyp'], data['refs'], data['doc']):
+        assert len(rs) == 11
+        hyps += [h] * len(rs)
+        docs += [d] * len(rs)
+        refs += rs
+
     from metrics.nli1_score import NLI1Scorer
     nli_scorer = NLI1Scorer()
     nli_scores = nli_scorer.evaluate_batch(refs, hyps)
@@ -169,11 +170,26 @@ if __name__ == "__main__":
     dataset = datasets.load_dataset("cnn_dailymail", '3.0.0')
     data = load_data_summ(corr_path, dataset)
 
+    hyps, refs, docs = [], [], []
+    for h, rs, d in zip(data['hyp'], data['refs'], data['doc']):
+        assert len(rs) == 11
+        hyps += [h] * len(rs)
+        docs += [d] * len(rs)
+        refs += rs
+
+    from metrics.nli1_score import NLI1Scorer
+    nli_scorer = NLI1Scorer()
+
     for metric in metrics:
         scorer = "NLI_" + metric
         for file in tqdm.tqdm(os.listdir(adv_path)):
             hyps, hyps_ad, refs, sources = load_data(adv_path + file)
             error = file.split("_")[1][:-6]
             dataset = file.split("_")[0]
-            score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources)
+
+            nli_scores = nli_scorer.evaluate_batch(refs, hyps)
+            nli_scores_ad = nli_scorer.evaluate_batch(refs, hyps_ad)
+
+            score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, nli_scores_ad)
+
         score_corr(scorer, data)

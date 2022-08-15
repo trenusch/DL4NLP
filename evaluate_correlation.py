@@ -52,7 +52,7 @@ def print_and_save(corr_dict, metric_name, output_path="data/human_corr_results.
             f.write(final_string)
 
 
-def evaluate(scores, data, metric, metric_hash):
+def evaluate(scores, data, metric, metric_hash, output_path="data/human_corr_results.csv"):
     scores = [np.max(scores[i * 11: i * 11 + 11]) for i in range(int(len(scores) / 11))]
     data['metric_scores'] = scores
 
@@ -70,7 +70,7 @@ def evaluate(scores, data, metric, metric_hash):
                 human_scores = list(data[anno + '_' + c])
                 corr_dict[anno]['pearson'][c] = pearsonr(human_scores, metric_scores)[0]
                 corr_dict[anno]['kendall'][c] = kendalltau(human_scores, metric_scores)[0]
-        print_and_save(corr_dict, metric_name)
+        print_and_save(corr_dict, metric_name, output_path)
 
 
 def score(metric, data):
