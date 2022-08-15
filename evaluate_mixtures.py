@@ -4,11 +4,12 @@ from evaluate_correlation import load_data_summ, evaluate
 import tqdm
 import os
 import datasets
+import numpy as np
 
 def evaluate_mix(nli_scores, nli_scores_ad, metric_scores, metric_scores_ad, metric, dataset, error):
     for i in range(11):
         acc, kendall = {}, {}
-        weight = i * 0.1
+        weight = np.round_(i * 0.1, 1)
         metric_hash = "{}_nli_{}_{}".format(weight, 1 - weight, metric)
         scores = [0.5 * (weight * nli + (1 - weight) * m) for nli, m in zip(nli_scores[2], metric_scores)]
         scores_ad = [0.5 * (weight * nli + (1 - weight) * m) for nli, m in
@@ -27,7 +28,7 @@ def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, 
         scores = scorer.evaluate_batch(refs, hyps)
         scores_ad = scorer.evaluate_batch(refs, hyps_ad)
 
-        evaluate_mix(nli_scores, nli_scores_ad, scores, scores_ad, metric, dataset)
+        evaluate_mix(nli_scores, nli_scores_ad, scores, scores_ad, metric, dataset, error)
 
     elif scorer == "NLI_BertScore":
         metric = scorer
@@ -40,7 +41,7 @@ def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, 
         variants = ["bert_score_precision", "bert_score_recall", "bert_score_f1"]
 
         for v in variants:
-            evaluate_mix(nli_scores, nli_scores_ad, scores, scores_ad, metric + v, dataset)
+            evaluate_mix(nli_scores, nli_scores_ad, scores, scores_ad, metric + v, dataset, error)
 
     elif scorer == "NLI_MoverScore2":
         metric = scorer
@@ -54,7 +55,7 @@ def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, 
         scores_ad = word_mover_score(refs, hyps_ad, idf_dict_ref, idf_dict_hyp_ad, stop_words=[], n_gram=1,
                                      remove_subwords=True)
 
-        evaluate_mix(nli_scores, nli_scores_ad, scores, scores_ad, metric, dataset)
+        evaluate_mix(nli_scores, nli_scores_ad, scores, scores_ad, metric, dataset, error)
 
     elif scorer == "NLI_CHRF":
         metric = scorer
@@ -67,7 +68,7 @@ def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, 
         chrf_scores = [s['chrf'] for s in chrf_scores]
         chrf_scores_ad = [s['chrf'] for s in chrf_scores_ad]
 
-        evaluate_mix(nli_scores, nli_scores_ad, chrf_scores, chrf_scores_ad, metric, dataset)
+        evaluate_mix(nli_scores, nli_scores_ad, chrf_scores, chrf_scores_ad, metric, dataset, error)
 
     elif scorer == "NLI_Meteor":
         metric = scorer
@@ -79,14 +80,14 @@ def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, 
         meteor_scores = [b['meteor'] for b in meteor_scores]
         meteor_scores_ad = [b['meteor'] for b in meteor_scores_ad]
 
-        evaluate_mix(nli_scores, nli_scores_ad, meteor_scores, meteor_scores_ad, metric, dataset)
+        evaluate_mix(nli_scores, nli_scores_ad, meteor_scores, meteor_scores_ad, metric, dataset, error)
 
     else:
         raise NotImplementedError
 
 def evaluate_corr_mix(nli_scores, metric_scores, metric, data):
     for i in range(11):
-        weight = i * 0.1
+        weight = np.round_(i * 0.1, 1)
         metric_hash = "{}_nli_{}_{}".format(weight, 1 - weight, metric)
         scores = [0.5 * (weight * nli + (1 - weight) * m) for nli, m in zip(nli_scores[2], metric_scores)]
         evaluate(scores, data, metric, metric_hash, output_path="data/mix_human_correlation.csv")
