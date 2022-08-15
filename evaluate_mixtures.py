@@ -6,18 +6,21 @@ import os
 import datasets
 import numpy as np
 
+
 def evaluate_mix(nli_scores, nli_scores_ad, metric_scores, metric_scores_ad, metric, dataset, error):
     for i in range(11):
         acc, kendall = {}, {}
         weight = np.round_(i * 0.1, 1)
-        metric_hash = "{}_nli_{}_{}".format(weight, 1 - weight, metric)
-        scores = [0.5 * (weight * nli + (1 - weight) * m) for nli, m in zip(nli_scores[2], metric_scores)]
-        scores_ad = [0.5 * (weight * nli + (1 - weight) * m) for nli, m in
+        compl_weight = np.round_(1 - weight, 1)
+        metric_hash = "{}_nli_{}_{}".format(weight, compl_weight, metric)
+        scores = [0.5 * (weight * nli + compl_weight * m) for nli, m in zip(nli_scores[2], metric_scores)]
+        scores_ad = [0.5 * (weight * nli + compl_weight * m) for nli, m in
                      zip(nli_scores_ad[2], metric_scores_ad)]
         acc[error], kendall[error] = calculate_accuracy_and_kendall(scores, scores_ad)
 
         print_and_save(metric, metric_hash, dataset, len(scores), [error], acc, kendall,
                        output_dir="data/mix_output.txt")
+
 
 def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, nli_scores_ad):
     if scorer == "NLI_BartScore":
@@ -85,24 +88,23 @@ def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, 
     else:
         raise NotImplementedError
 
+
 def evaluate_corr_mix(nli_scores, metric_scores, metric, data):
     for i in range(11):
         weight = np.round_(i * 0.1, 1)
-        metric_hash = "{}_nli_{}_{}".format(weight, 1 - weight, metric)
-        scores = [0.5 * (weight * nli + (1 - weight) * m) for nli, m in zip(nli_scores[2], metric_scores)]
+        compl_weight = np.round_(1 - weight, 1)
+        metric_hash = "{}_nli_{}_{}".format(weight, compl_weight, metric)
+        scores = [0.5 * (weight * nli + compl_weight * m) for nli, m in zip(nli_scores[2], metric_scores)]
         evaluate(scores, data, metric, metric_hash, output_path="data/mix_human_correlation.csv")
 
-def score_corr(scorer, data):
+
+def score_corr(scorer, data, nli_scores):
     hyps, refs, docs = [], [], []
     for h, rs, d in zip(data['hyp'], data['refs'], data['doc']):
         assert len(rs) == 11
         hyps += [h] * len(rs)
         docs += [d] * len(rs)
         refs += rs
-
-    from metrics.nli1_score import NLI1Scorer
-    nli_scorer = NLI1Scorer()
-    nli_scores = nli_scorer.evaluate_batch(refs, hyps)
 
     if scorer == "NLI_BartScore":
         metric = scorer
@@ -179,7 +181,9 @@ if __name__ == "__main__":
         refs += rs
 
     from metrics.nli1_score import NLI1Scorer
+
     nli_scorer = NLI1Scorer()
+    nli_corr_scores = nli_scorer.evaluate_batch(refs, hyps)
 
     for metric in metrics:
         scorer = "NLI_" + metric
@@ -193,4 +197,4 @@ if __name__ == "__main__":
 
             score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, nli_scores_ad)
 
-        score_corr(scorer, data)
+        score_corr(scorer, data, nli_corr_scores)
