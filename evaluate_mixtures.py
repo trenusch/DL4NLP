@@ -31,6 +31,9 @@ def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, 
         scores = scorer.evaluate_batch(refs, hyps)
         scores_ad = scorer.evaluate_batch(refs, hyps_ad)
 
+        scores = [np.exp(s) for s in scores]
+        scores_ad = [np.exp(s) for s in scores_ad]
+
         evaluate_mix(nli_scores, nli_scores_ad, scores, scores_ad, metric, dataset, error)
 
     elif scorer == "NLI_BertScore":
@@ -70,8 +73,8 @@ def score_adv(scorer, error, dataset, refs, hyps, hyps_ad, sources, nli_scores, 
 
         chrf_scores = chrf_scorer.evaluate_batch(refs, hyps, aggregate=False)
         chrf_scores_ad = chrf_scorer.evaluate_batch(refs, hyps_ad, aggregate=False)
-        chrf_scores = [s['chrf'] for s in chrf_scores]
-        chrf_scores_ad = [s['chrf'] for s in chrf_scores_ad]
+        chrf_scores = [0.01 * s['chrf'] for s in chrf_scores]
+        chrf_scores_ad = [0.01 * s['chrf'] for s in chrf_scores_ad]
 
         evaluate_mix(nli_scores, nli_scores_ad, chrf_scores, chrf_scores_ad, metric, dataset, error)
 
@@ -115,6 +118,8 @@ def score_corr(scorer, data, nli_scores):
 
         scores = scorer.evaluate_batch(refs, hyps)
 
+        scores = [np.exp(s) for s in scores]
+
         evaluate_corr_mix(nli_scores, scores, metric, data)
 
     elif scorer == "NLI_BertScore":
@@ -146,7 +151,7 @@ def score_corr(scorer, data, nli_scores):
         chrf_scorer = ChrfppMetric()
 
         chrf_scores = chrf_scorer.evaluate_batch(refs, hyps, aggregate=False)
-        chrf_scores = [s['chrf'] for s in chrf_scores]
+        chrf_scores = [0.01 * s['chrf'] for s in chrf_scores]
 
         evaluate_corr_mix(nli_scores, chrf_scores, metric, data)
 
